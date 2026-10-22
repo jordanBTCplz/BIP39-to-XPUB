@@ -4,7 +4,7 @@ BIP39 words → account **xpub** so Bitcoin Core can **watch**.
 
 This tool is for someone that wants to generate their own entropy and a BIP39 plate, the extra
 code here is two small stdlib Python scripts. Linux, Tails, and Core require the
-same trust you would need for an offline Core-only workflow. Sparrow
+same trust you would need for an offline Core-only workflow. Electrum
 is the independent check that those scripts walked BIP32 the same way
 libsecp does. **If you do not care about BIP39, use Core and skip this
 repo**.
@@ -13,24 +13,25 @@ This is not a signing wallet. The only job this tool has been tested for is:
 
 **24 words → BIP84 xpub + watch-only descriptor + receive address 0.**
 
-`--xprv`, other paths, passphrases, multisig, and spending have **not**
-been treated as a finished product. Sign in Sparrow/ (or your trusted signer) 
-on an air-gapped machine. The core online node only ever sees an xpub from this tool.
+`--xprv`, other paths, passphrases and spending have **not**
+been treated as a finished product. Sign in Electrum (or your trusted signer) 
+on an air-gapped machine booted into Tails. The core online node only ever sees an xpub from this tool.
 
 Do not put real money on an address that has only been printed by
 `bip39_account.py`. These files are not formally reviewed.
 
-This tool does not use libsecp. Sparrow (and Core) do. I only even bring 
-Sparrow in as a grader because it is a well-regarded software that takes 
-BIP39 words in and uses libsecp for BIP32. Libsecp is a much
+This tool does not use libsecp. Electrum (and Core) do. I only even bring 
+Electrum in as a grader because it is a well-regarded software that takes 
+BIP39 words in and uses libsecp for BIP32. Electrum ships in Tails so you 
+get it anyway with no additional download. Libsecp is a much
 larger library than we need here; we only walk BIP32 far enough to print
-an xpub and address 0. Grade this script offline against Sparrow or another BIP39 wallet
+an xpub and address 0. Grade this script offline against Electrum or another BIP39 wallet
 you trust offline that uses libsecp. Once you have confirmed that the 24 words you 
 generated produce the same XPUB and receive address that our script prints, then you
 can paste the XPUB into Core as your watch only node.
 
 If the same 24 words and path produce the **same xpub and address 0** in
-this script and in Sparrow, you are not looking at a malicious address.
+this script and in Electrum, you are not looking at a malicious address.
 The scripts are small and do one job. A match does **not** fix a word you
 wrote down wrong on your backup.
 
@@ -56,7 +57,7 @@ Dice protocol is still in `instructions.md` if you want it.
 ## Trust model
 
 After the same 24 words print the same address 0 in this script and in
-Sparrow, the derivation is as checked as these files get. Core is what
+Electrum, the derivation is as checked as these files get. Core is what
 you use to watch that xpub afterward.
 
 What still loses coins: sloppy draws, leftover bits in the wrong place,
