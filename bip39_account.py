@@ -15,8 +15,9 @@ Supported account paths (exactly 3 hardened levels, coin type 0h):
   m/49h/0h/0h  nested SegWit (3...)      sh(wpkh(...))
   m/44h/0h/0h  legacy (1...)             pkh(...)
 
-Self-test (run before using a real seed):
-  python3 seed_to_xpub_fixed.py --test
+Self-test (run before using a real seed; english.txt must be next to this file):
+  python3 bip39_account.py --test
+It must end with ALL TESTS PASSED. A missing english.txt counts as a failure.
 """
 
 from __future__ import annotations
@@ -490,16 +491,15 @@ def run_tests(wordlist_path: Path) -> None:
         validate_path(parse_path(ok))
     print("PASS path validation")
 
-    if wordlist_path.exists():
-        wl = load_wordlist(wordlist_path)
-        for nbytes in (16, 20, 24, 28, 32):
-            for fill in (0x00, 0x7F, 0xFF, 0xA5):
-                ent = bytes([fill]) * nbytes
-                if mnemonic_to_entropy(entropy_to_mnemonic(ent, wl), wl) != ent:
-                    _fail(f"checksum round trip, {nbytes * 3 // 4} words")
-        print("PASS checksum round trip for 12/15/18/21/24 words")
-    else:
-        print(f"SKIP wordlist checks ({wordlist_path} not found)")
+    if not wordlist_path.exists():
+        _fail(f"wordlist not found at {wordlist_path} (put the official english.txt next to this script)")
+    wl = load_wordlist(wordlist_path)
+    for nbytes in (16, 20, 24, 28, 32):
+        for fill in (0x00, 0x7F, 0xFF, 0xA5):
+            ent = bytes([fill]) * nbytes
+            if mnemonic_to_entropy(entropy_to_mnemonic(ent, wl), wl) != ent:
+                _fail(f"checksum round trip, {nbytes * 3 // 4} words")
+    print("PASS checksum round trip for 12/15/18/21/24 words")
     print("ALL TESTS PASSED")
 
 

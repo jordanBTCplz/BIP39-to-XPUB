@@ -67,7 +67,8 @@ Some live USBs use `/run/media/USERNAME/LABEL` instead.
 
     python3 bip39_account.py --test
 
-You want `PASS`. The `xprv9s21ZrQH…` line is Trezor's test key, not yours
+You want every line to say `PASS` and the last line to say `ALL TESTS PASSED`. Any `FAIL`
+(including "wordlist not found") means stop. The built-in test vectors are public test keys, not yours.
 
 ---
 
@@ -112,7 +113,7 @@ Then section 5.
     python3 bip39_last_word.py
 
 - type the 23 words with spaces between them
-- Extra bits: the three `0`/`1`s from paper (example `000` or `101`)
+- Extra bits: the three `0`/`1`s from paper (example `000` or `101`; coin flips also work as `HTT` with H=1, T=0)
 - Write **word 24** and the full 24-word seed on paper
 
 ---
@@ -121,19 +122,25 @@ Then section 5.
 
     python3 bip39_account.py
 
-Type all **24** words. Script default is no passphrase.
+Type all **24** words (or your 12/15/18/21 words if you already had a valid phrase). The prompt is
+**hidden**: nothing shows while you type, like a password. A word that is not on the list, or a bad
+checksum, stops the script. A typo that happens to be another valid word can still slip past the
+checksum, so do step 6b before you trust the result.
 
-There is a `--passphrase` option. Do not use it unless that extra secret is written down with the plate. When you check in Sparrow leave the passphrase blank so it matches.
+Script default is no passphrase and the path `m/84h/0h/0h`. For nested SegWit or legacy add
+`--path m/49h/0h/0h` or `--path m/44h/0h/0h`. Any other path is refused.
+
+There is a passphrase option: `--ask-passphrase` (hidden prompt). Do not use it unless that extra secret is written down and backed up, but **not together** with the plate. Enter the same passphrase in Electrum when you check in 6b, or leave it blank in both. Avoid `--passphrase` and `--words`: they put your secret in the shell history and the process list.
 
 Copy onto paper or a **public-only** text file on the data USB (not the 24 words):
 
 - path (`m/84h/0h/0h`)
 - master fingerprint (xfp)
 - **xpub**
-- `wpkh([xfp/84h/0h/0h]xpub…/0/*)`
+- both descriptor lines (receive `…/0/*` and change `…/1/*`), each already ending in `#checksum`
 - first receive address (`bc1q…`)
 
-Do **not** pass `--xprv` unless this box is air-gapped and you need a signing descriptor. Address 0 is `m/84h/0h/0h/0/0`. Confirm it on a second tool (Sparrow / Core) before sending.
+Do **not** pass `--xprv` unless this box is air-gapped and you need a signing descriptor. Address 0 is `m/84h/0h/0h/0/0`. Confirm it in Electrum (section 6b) before sending.
 
 **If** you used the dice path, delete `rows.txt` before you unplug the stick:
 
@@ -146,15 +153,49 @@ decided to make pulling slips of paper the default. This is a risk. **Be aware o
 
 ---
 
+## 6b. Check address 0 in Electrum (same offline Tails session)
+
+This is the independent check. Do it before anything is sent.
+
+1. Open Electrum (it ships in Tails). Create a new wallet and choose to restore from an existing
+   seed. In the seed dialog open **Options**, tick **BIP39 seed**, then type the same words. If you
+   used a passphrase, Electrum may label that field "Extend this seed with custom words".
+2. When Electrum asks for the script type and derivation path, pick **native segwit (p2wpkh)** and
+   `m/84'/0'/0'`. (For `--path m/49h/0h/0h` pick p2wpkh-p2sh and `m/49'/0'/0'`; for
+   `m/44h/0h/0h` pick legacy p2pkh and `m/44'/0'/0'`.) Menu names differ a little between
+   Electrum versions.
+3. Open the Addresses tab. The first receiving address must be identical to the one the script
+   printed, character for character.
+4. Electrum shows the account key as `zpub…`, not `xpub…`. That is the same key with different
+   version bytes. Do not compare those strings. The address is the check.
+
+If the addresses differ: stop. Do not import anything into Core and do not send anything.
+Re-check the words, the path and the passphrase first.
+
+---
+
 ## 7. Online node (Bitcoin Core)
 
 Words stay on paper. Only the descriptor moves.
 
-1. Create a **watch-only** wallet (disable private keys).
-2. `getdescriptorinfo` on the receive `wpkh(…/0/*)` line; use the string that includes `#checksum`.
-3. Same for change: same xpub with `/1/*`.
-4. `importdescriptors` both (receive `internal: false`, change `internal: true`). Use `"timestamp": "now"` if coins have not been sent yet. A pruned node may refuse `timestamp: 0`.
-5. Receive / `getnewaddress` must match script address 0. If not, stop.
+1. Create a **watch-only** descriptor wallet (no private keys, blank):
+
+       bitcoin-cli createwallet "watch" true true "" false true
+
+   (arguments: disable_private_keys, blank, no passphrase, no avoid_reuse, descriptors)
+
+2. Import both descriptor lines exactly as the script printed them. They already end in `#checksum`.
+   You can run `getdescriptorinfo` on each as a cross-check; it should return the same checksum.
+   `"active": true` is required, or `getnewaddress` will not use them:
+
+       bitcoin-cli -rpcwallet=watch importdescriptors '[
+         {"desc": "<receive line, ends #checksum>", "active": true, "internal": false, "timestamp": "now"},
+         {"desc": "<change line, ends #checksum>",  "active": true, "internal": true,  "timestamp": "now"}]'
+
+   Use `"timestamp": "now"` for a new wallet with no coins. If address 0 has already received coins,
+   use `"timestamp": 0` so Core rescans (slow; a pruned node may refuse it).
+3. `bitcoin-cli -rpcwallet=watch getnewaddress "" bech32` must print script address 0 on a fresh
+   wallet (use `p2sh-segwit` for 49h, `legacy` for 44h). If not, stop.
 
 Send a small test amount to that `bc1q`. Confirm it in Core before any serious balance.
 
@@ -173,10 +214,19 @@ Tails does not keep scripts in RAM after shutdown. The tools USB does.
 
 These scripts do not sign. They do not need to.
 
-Online Core (watch-only) builds a PSBT. On Tails, open Sparrow,
-type the 24 words for that session only, sign, write the signed
-PSBT back to a USB. Core broadcasts. Wipe / shut down. Do not
-leave the seed on disk.
+Online Core (watch-only) builds a PSBT (`walletcreatefundedpsbt`). On Tails, open Electrum and
+restore the wallet from the 24 words for that session only (as in 6b). Load the PSBT and
+**read the destination address, the amount and the change address on screen before you sign**.
+The change output should go to an address of your own wallet. Sign, then export the signed result.
+Back on the online machine, `finalizepsbt` (if it is a PSBT) and `sendrawtransaction`, or use
+Core's GUI. Wipe / shut down. Do not leave the seed on disk.
+
+How the data crosses the gap matters. Data going out of the offline machine (an xpub, a signed
+transaction) is public and low risk. Data going in is the risk. QR codes are the safest way in:
+Electrum can scan and show them, and Core cannot draw them, so render the PSBT's base64 on the
+online side with a small tool such as `qrencode`. A USB stick that has touched the online machine
+is the riskiest thing to plug into the signer. If you must use USB, use a dedicated stick that only
+ever carries PSBTs, never the tools stick.
 
 Do **not** use `--xprv` for this. That flag dumps a spending key.
 It is untested. Leave it alone.
@@ -191,6 +241,8 @@ It is untested. Leave it alone.
     python3 bip39_account.py --test
     python3 bip39_last_word.py
     python3 bip39_account.py
+    python3 bip39_account.py --ask-passphrase
+    python3 bip39_account.py --path m/49h/0h/0h
 
 Dice path only:
 
