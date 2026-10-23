@@ -16,7 +16,8 @@ This is not a signing wallet. `bip39_account.py` does one job:
 
 Paths: BIP84 `m/84h/0h/0h` (default, `bc1q…`), BIP49 `m/49h/0h/0h` (`3…`) and BIP44
 `m/44h/0h/0h` (`1…`). Mainnet only. Any other path is refused on purpose. The words are typed
-at a hidden prompt.
+at a prompt and are visible as you type. Add `--hidden` for no echo, for example if someone else
+could see your screen.
 
 `python3 bip39_account.py --test` checks the code against published test vectors: BIP39 seed
 with a passphrase, first addresses for all three paths, bech32, RIPEMD-160, the descriptor
@@ -127,8 +128,9 @@ Indexes are **0-based** (`abandon` = 0). GitHub line numbers are 1-based.
    (For coin flips, `bip39_last_word.py` reads H as 1 and T as 0.)
 5. On the offline box: `python3 bip39_last_word.py` with the 23 words and
    those 3 bits. Write word 24.
-6. `python3 bip39_account.py` with all 24 words (typed at a hidden prompt). Default is an empty
-   passphrase. To use one, run it with `--ask-passphrase` (hidden prompt). Do not use a passphrase
+6. `python3 bip39_account.py` with all 24 words (visible as you type; `--hidden` for no echo).
+   Default is an empty passphrase. To use one, run it with `--ask-passphrase` (always a hidden
+   prompt, so a mistyped passphrase gives a different wallet silently). Do not use a passphrase
    unless that extra secret is written down and backed up just like your 24 words and **NOT Together**.
    Enter the same passphrase in Electrum when you check. Avoid `--passphrase` and `--words`: they
    put your secret in the shell history and the process list. The passphrase step of the derivation is

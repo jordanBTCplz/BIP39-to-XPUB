@@ -18,7 +18,8 @@ derivation bugs but is not a review.
   as `zpub`/`ypub`, so compare the address, not the key text. After importing into Core, confirm
   that Core's first `getnewaddress` is the same address.
 - Keep the 24 words on paper/steel. Delete `rows.txt`. Do not photograph a real plate.
-- Type the words and any passphrase at the hidden prompts. Avoid `--words` and `--passphrase`: they
+- Type the words at the prompt (visible by default; use `--hidden` if anyone could see or photograph
+  your screen) and use `--ask-passphrase` for any passphrase (always hidden). Avoid `--words` and `--passphrase`: they
   leak into shell history and the process list.
 - Use `--xprv` only on the air-gap box. Never paste an xprv into a hot machine.
 - Move data **into** the offline machine by QR where you can. A USB stick that has touched an

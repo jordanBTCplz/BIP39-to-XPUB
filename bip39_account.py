@@ -15,6 +15,10 @@ Supported account paths (exactly 3 hardened levels, coin type 0h):
   m/49h/0h/0h  nested SegWit (3...)      sh(wpkh(...))
   m/44h/0h/0h  legacy (1...)             pkh(...)
 
+The words are typed at a prompt and are visible on screen by default. Add --hidden
+for no echo (like a password), e.g. if someone else could see your screen.
+A passphrase, if you use one, is entered with --ask-passphrase and is always hidden.
+
 Self-test (run before using a real seed; english.txt must be next to this file):
   python3 bip39_account.py --test
 It must end with ALL TESTS PASSED. A missing english.txt counts as a failure.
@@ -509,6 +513,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--wordlist", default=str(Path(__file__).with_name("english.txt")))
     ap.add_argument("--words", help="NOT recommended: leaks into shell history / process list")
+    ap.add_argument("--hidden", action="store_true", help="hide the seed words while typing (no echo)")
     ap.add_argument("--passphrase", default=None, help="NOT recommended: use --ask-passphrase")
     ap.add_argument("--ask-passphrase", action="store_true", help="prompt for the BIP39 passphrase (hidden)")
     ap.add_argument("--path", default="m/84h/0h/0h", help="account path")
@@ -527,8 +532,10 @@ def main() -> None:
     if args.words:
         print("warning: --words leaks the seed into shell history and the process list", file=sys.stderr)
         raw = args.words
-    else:
+    elif args.hidden:
         raw = getpass.getpass("seed words (hidden): ")
+    else:
+        raw = input("seed words: ")
     words = nfkd(raw).strip().lower().split()
     mnemonic_to_entropy(words, wordlist)
 

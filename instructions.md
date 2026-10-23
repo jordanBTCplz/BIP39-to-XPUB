@@ -122,10 +122,11 @@ Then section 5.
 
     python3 bip39_account.py
 
-Type all **24** words (or your 12/15/18/21 words if you already had a valid phrase). The prompt is
-**hidden**: nothing shows while you type, like a password. A word that is not on the list, or a bad
-checksum, stops the script. A typo that happens to be another valid word can still slip past the
-checksum, so do step 6b before you trust the result.
+Type all **24** words (or your 12/15/18/21 words if you already had a valid phrase). The words are
+visible as you type, so check each word against your paper. (Add `--hidden` if you want nothing
+shown, like a password prompt, for example if someone else can see your screen.) A word that is not
+on the list, or a bad checksum, stops the script. A typo that happens to be another valid word can
+still slip past the checksum, so do step 6b before you trust the result.
 
 Script default is no passphrase and the path `m/84h/0h/0h`. For nested SegWit or legacy add
 `--path m/49h/0h/0h` or `--path m/44h/0h/0h`. Any other path is refused.
@@ -241,6 +242,7 @@ It is untested. Leave it alone.
     python3 bip39_account.py --test
     python3 bip39_last_word.py
     python3 bip39_account.py
+    python3 bip39_account.py --hidden
     python3 bip39_account.py --ask-passphrase
     python3 bip39_account.py --path m/49h/0h/0h
 
