@@ -1,4 +1,4 @@
-# not-yeti
+# BIP39_to_XPUB
 
 BIP39 words → account **xpub** so Bitcoin Core can **watch**.
 
